@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String
+  createdAt DateTime @default(now()) @map("created_at")
+  orders    Order[]
+
+  @@map("users")
+}
+
+model Order {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  status    Int
+  user      User     @relation(fields: [userId], references: [id])
+  tickets   Ticket[]
+
+  @@map("orders")
+}
+
+model Movie {
+  id          Int       @id @default(autoincrement())
+  name        String
+  duration    Int?
+  releaseDate DateTime? @db.Date @map("release_date")
+  sessions    Session[]
+
+  @@map("movie")
+}
+
+model Room {
+  id       Int       @id @default(autoincrement())
+  number   Int       @unique
+  seats    Seat[]
+  sessions Session[]
+
+  @@map("room")
+}
+
+model Seat {
+  id      Int      @id @default(autoincrement())
+  roomId  Int      @map("room_id")
+  number  Int
+  room    Room     @relation(fields: [roomId], references: [id])
+  tickets Ticket[]
+
+  @@unique([roomId, number])
+  @@map("seat")
+}
+
+model Session {
+  id          Int      @id @default(autoincrement())
+  movieId     Int      @map("movie_id")
+  roomId      Int      @map("room_id")
+  sessionTime DateTime @map("session_time")
+  movie       Movie    @relation(fields: [movieId], references: [id])
+  room        Room     @relation(fields: [roomId], references: [id])
+  tickets     Ticket[]
+
+  @@map("session")
+}
+
+model Ticket {
+  id        Int      @id @default(autoincrement())
+  orderId   Int      @map("order_id")
+  sessionId Int      @map("session_id")
+  seatId    Int      @map("seat_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  order     Order    @relation(fields: [orderId], references: [id])
+  session   Session  @relation(fields: [sessionId], references: [id])
+  seat      Seat     @relation(fields: [seatId], references: [id])
+
+  @@unique([sessionId, seatId])
+  @@map("ticket")
+}
