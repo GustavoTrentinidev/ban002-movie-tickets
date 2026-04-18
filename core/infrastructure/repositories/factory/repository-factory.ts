@@ -1,11 +1,13 @@
 import type { MovieRepository } from "@/core/domain/repositories/movie-repository";
 import type { OrderRepository } from "@/core/domain/repositories/order-repository";
 import type { RoomRepository } from "@/core/domain/repositories/room-repository";
+import type { ReportRepository } from "@/core/domain/repositories/report-repository";
 import type { SeatRepository } from "@/core/domain/repositories/seat-repository";
 import type { SessionRepository } from "@/core/domain/repositories/session-repository";
 import type { UserRepository } from "@/core/domain/repositories/user-repository";
 import { SQLMovieRepository } from "@/core/infrastructure/repositories/sql/sql-movie-repository";
 import { SQLOrderRepository } from "@/core/infrastructure/repositories/sql/sql-order-repository";
+import { SQLReportRepository } from "@/core/infrastructure/repositories/sql/sql-report-repository";
 import { SQLRoomRepository } from "@/core/infrastructure/repositories/sql/sql-room-repository";
 import { SQLSeatRepository } from "@/core/infrastructure/repositories/sql/sql-seat-repository";
 import { SQLSessionRepository } from "@/core/infrastructure/repositories/sql/sql-session-repository";
@@ -18,6 +20,7 @@ export interface RepositoryFactory {
   order(): OrderRepository;
   user(): UserRepository;
   room(): RoomRepository;
+  report(): ReportRepository;
 }
 
 class SQLRepositoryFactory implements RepositoryFactory {
@@ -43,6 +46,10 @@ class SQLRepositoryFactory implements RepositoryFactory {
 
   room(): RoomRepository {
     return new SQLRoomRepository();
+  }
+
+  report(): ReportRepository {
+    return new SQLReportRepository();
   }
 }
 
