@@ -11,7 +11,7 @@ export default function AdminPage() {
           <div>
             <p className="text-sm font-medium uppercase tracking-wide text-indigo-700">Administracao</p>
             <h1 className="mt-2 text-3xl font-bold text-slate-900">Gerenciamento de cadastro</h1>
-            <p className="mt-2 text-slate-600">Gerencie filmes, sessoes, salas e assentos usando as rotas existentes.</p>
+            <p className="mt-2 text-slate-600">Gerencie usuarios, filmes, sessoes, salas e assentos usando as rotas existentes.</p>
           </div>
           <Link
             href="/"

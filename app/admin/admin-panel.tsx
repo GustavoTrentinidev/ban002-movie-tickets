@@ -9,6 +9,11 @@ type Movie = {
   releaseDate: string | null;
 };
 
+type User = {
+  id: number;
+  username: string;
+};
+
 type Room = {
   id: number;
   number: number;
@@ -27,9 +32,10 @@ type Session = {
   sessionTime: string;
 };
 
-type ManagedResource = "movies" | "sessions" | "rooms" | "seats";
+type ManagedResource = "users" | "movies" | "sessions" | "rooms" | "seats";
 
 type FeedbackState = {
+  users: string;
   movies: string;
   sessions: string;
   rooms: string;
@@ -101,6 +107,7 @@ function toDisplayDateTime(rawDateTime: string): string {
 }
 
 export function AdminPanel() {
+  const [users, setUsers] = useState<User[]>([]);
   const [movies, setMovies] = useState<Movie[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -109,17 +116,25 @@ export function AdminPanel() {
   const [requestError, setRequestError] = useState("");
 
   const [success, setSuccess] = useState<FeedbackState>({
+    users: "",
     movies: "",
     sessions: "",
     rooms: "",
     seats: "",
   });
   const [errors, setErrors] = useState<FeedbackState>({
+    users: "",
     movies: "",
     sessions: "",
     rooms: "",
     seats: "",
   });
+
+  const [userForm, setUserForm] = useState({
+    username: "",
+  });
+  const [editingUserId, setEditingUserId] = useState<number | null>(null);
+  const [userSubmitting, setUserSubmitting] = useState(false);
 
   const [movieForm, setMovieForm] = useState({
     name: "",
@@ -159,12 +174,17 @@ export function AdminPanel() {
     setRequestError("");
 
     try {
-      const [moviesResponse, sessionsResponse, roomsResponse, seatsResponse] = await Promise.all([
+      const [usersResponse, moviesResponse, sessionsResponse, roomsResponse, seatsResponse] = await Promise.all([
+        fetch("/api/users", { cache: "no-store" }),
         fetch("/api/movies", { cache: "no-store" }),
         fetch("/api/sessions", { cache: "no-store" }),
         fetch("/api/rooms", { cache: "no-store" }),
         fetch("/api/seats", { cache: "no-store" }),
       ]);
+
+      if (!usersResponse.ok) {
+        throw new Error(await parseError(usersResponse));
+      }
 
       if (!moviesResponse.ok) {
         throw new Error(await parseError(moviesResponse));
@@ -182,13 +202,15 @@ export function AdminPanel() {
         throw new Error(await parseError(seatsResponse));
       }
 
-      const [moviesData, sessionsData, roomsData, seatsData] = (await Promise.all([
+      const [usersData, moviesData, sessionsData, roomsData, seatsData] = (await Promise.all([
+        usersResponse.json(),
         moviesResponse.json(),
         sessionsResponse.json(),
         roomsResponse.json(),
         seatsResponse.json(),
-      ])) as [Movie[], Session[], Room[], Seat[]];
+      ])) as [User[], Movie[], Session[], Room[], Seat[]];
 
+      setUsers(usersData);
       setMovies(moviesData);
       setSessions(sessionsData);
       setRooms(roomsData);
@@ -224,6 +246,11 @@ export function AdminPanel() {
     setEditingMovieId(null);
   }
 
+  function resetUserForm(): void {
+    setUserForm({ username: "" });
+    setEditingUserId(null);
+  }
+
   function resetRoomForm(): void {
     setRoomForm({ number: "", seatsCount: "" });
     setEditingRoomId(null);
@@ -237,6 +264,72 @@ export function AdminPanel() {
   function resetSeatForm(): void {
     setSeatForm({ roomId: "", number: "" });
     setEditingSeatId(null);
+  }
+
+  async function handleUserSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    clearFeedback("users");
+    setUserSubmitting(true);
+
+    try {
+      const payload = {
+        username: userForm.username,
+      };
+
+      const response = await fetch(editingUserId === null ? "/api/users" : `/api/users/${editingUserId}`, {
+        method: editingUserId === null ? "POST" : "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(await parseError(response));
+      }
+
+      await reloadAll();
+      setSuccessMessage(
+        "users",
+        editingUserId === null ? "Usuario criado com sucesso." : "Usuario atualizado com sucesso."
+      );
+      resetUserForm();
+    } catch (error) {
+      setErrorMessage("users", error instanceof Error ? error.message : "Falha ao salvar usuario.");
+    } finally {
+      setUserSubmitting(false);
+    }
+  }
+
+  function startUserEdit(user: User): void {
+    setEditingUserId(user.id);
+    setUserForm({
+      username: user.username,
+    });
+    clearFeedback("users");
+  }
+
+  async function deleteUser(userId: number): Promise<void> {
+    if (!window.confirm("Deseja remover este usuario?")) {
+      return;
+    }
+
+    clearFeedback("users");
+
+    try {
+      const response = await fetch(`/api/users/${userId}`, { method: "DELETE" });
+      if (!response.ok) {
+        throw new Error(await parseError(response));
+      }
+
+      await reloadAll();
+      setSuccessMessage("users", "Usuario removido com sucesso.");
+      if (editingUserId === userId) {
+        resetUserForm();
+      }
+    } catch (error) {
+      setErrorMessage("users", error instanceof Error ? error.message : "Falha ao remover usuario.");
+    }
   }
 
   async function handleMovieSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
@@ -569,6 +662,90 @@ export function AdminPanel() {
 
   return (
     <div className="space-y-6">
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-semibold text-slate-900">Usuarios</h2>
+
+        <form className="mt-4 grid gap-4 md:grid-cols-3" onSubmit={(event) => void handleUserSubmit(event)}>
+          <label className="flex flex-col gap-1 text-sm text-slate-700 md:col-span-2">
+            Nome de usuario
+            <input
+              value={userForm.username}
+              onChange={(event) => setUserForm((state) => ({ ...state, username: event.target.value }))}
+              className="rounded-md border border-slate-300 bg-white px-3 py-2"
+              placeholder="Ex: maria"
+              required
+            />
+          </label>
+
+          <div className="flex items-end gap-2">
+            <button
+              type="submit"
+              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+              disabled={userSubmitting}
+            >
+              {userSubmitting ? "Salvando..." : editingUserId === null ? "Criar usuario" : "Atualizar usuario"}
+            </button>
+            {editingUserId !== null ? (
+              <button
+                type="button"
+                onClick={resetUserForm}
+                className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400"
+              >
+                Cancelar
+              </button>
+            ) : null}
+          </div>
+        </form>
+
+        {success.users ? <p className="mt-3 text-sm font-medium text-emerald-700">{success.users}</p> : null}
+        {errors.users ? <p className="mt-3 text-sm font-medium text-rose-700">{errors.users}</p> : null}
+
+        <div className="mt-5 overflow-x-auto">
+          <table className="min-w-full text-left text-sm">
+            <thead className="border-b border-slate-200 text-slate-600">
+              <tr>
+                <th className="px-2 py-2 font-medium">ID</th>
+                <th className="px-2 py-2 font-medium">Usuario</th>
+                <th className="px-2 py-2 font-medium">Acoes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr key={user.id} className="border-b border-slate-100">
+                  <td className="px-2 py-2 text-slate-700">{user.id}</td>
+                  <td className="px-2 py-2 text-slate-800">{user.username}</td>
+                  <td className="px-2 py-2">
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => startUserEdit(user)}
+                        className="rounded-md border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-indigo-300 hover:text-indigo-700"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void deleteUser(user.id)}
+                        className="rounded-md border border-rose-300 px-3 py-1 text-xs font-medium text-rose-700 transition hover:bg-rose-50"
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {users.length === 0 ? (
+                <tr>
+                  <td className="px-2 py-3 text-slate-600" colSpan={3}>
+                    Nenhum usuario cadastrado.
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold text-slate-900">Filmes</h2>
 
