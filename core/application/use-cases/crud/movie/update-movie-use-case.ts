@@ -40,8 +40,8 @@ export class UpdateMovieUseCase {
     return updated;
   }
 
-  private normalizeName(name: string | null): string {
-    if (name === null) {
+  private normalizeName(name: string | null | undefined): string {
+    if (name === null || name === undefined) {
       throw new ApplicationError("Field 'name' cannot be null.", 400);
     }
 
@@ -53,8 +53,8 @@ export class UpdateMovieUseCase {
     return trimmed;
   }
 
-  private normalizeDuration(duration: number | null): number | null {
-    if (duration === null) {
+  private normalizeDuration(duration: number | null | undefined): number | null {
+    if (duration === null || duration === undefined) {
       return null;
     }
 
@@ -65,8 +65,8 @@ export class UpdateMovieUseCase {
     return duration;
   }
 
-  private normalizeReleaseDate(value: string | Date | null): Date | null {
-    if (value === null) {
+  private normalizeReleaseDate(value: string | Date | null | undefined): Date | null {
+    if (value === null || value === undefined) {
       return null;
     }
 

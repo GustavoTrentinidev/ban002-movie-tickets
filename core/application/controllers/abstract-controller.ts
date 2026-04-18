@@ -1,5 +1,8 @@
 import { ApplicationError } from "@/core/application/errors/application-error";
-import { Prisma } from "@prisma/client";
+import {
+  PrismaClientInitializationError,
+  PrismaClientKnownRequestError,
+} from "@prisma/client/runtime/library";
 
 export abstract class AbstractController {
   protected async execute(action: () => Promise<Response>): Promise<Response> {
@@ -19,14 +22,14 @@ export abstract class AbstractController {
       return Response.json({ message: error.message }, { status: error.statusCode });
     }
 
-    if (error instanceof Prisma.PrismaClientInitializationError) {
+    if (error instanceof PrismaClientInitializationError) {
       return Response.json(
         { message: "Database unavailable. Check if PostgreSQL is running on localhost:5432." },
         { status: 503 }
       );
     }
 
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error instanceof PrismaClientKnownRequestError) {
       if (error.code === "P2002") {
         return Response.json(
           { message: "Unique constraint violation." },

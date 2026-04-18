@@ -4,6 +4,8 @@ import { GetMovieByIdUseCase } from "@/core/application/use-cases/crud/movie/get
 import { ListSessionsUseCase } from "@/core/application/use-cases/crud/session/list-sessions-use-case";
 import { repositoryFactory } from "@/core/infrastructure/repositories/factory/repository-factory";
 
+export const dynamic = "force-dynamic";
+
 function parseId(value: string): number | null {
   const id = Number(value);
   if (!Number.isInteger(id) || id <= 0) {

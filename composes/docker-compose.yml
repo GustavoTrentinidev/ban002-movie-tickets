@@ -1,4 +1,7 @@
+x-app-db-url: &app_db_url postgresql://postgres:postgres@postgres:5432/movie_tickets?schema=public
+
 services:
+
   postgres:
     image: postgres:16-alpine
     container_name: movie_tickets_postgres
@@ -16,6 +19,23 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  app:
+    build:
+      context: ..
+      dockerfile: composes/Dockerfile
+      args:
+        DATABASE_URL: *app_db_url
+    container_name: movie_tickets_app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: *app_db_url
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
 
 volumes:
   postgres_data:

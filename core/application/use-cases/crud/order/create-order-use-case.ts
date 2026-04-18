@@ -1,5 +1,8 @@
 import { ApplicationError } from "@/core/application/errors/application-error";
 import { Prisma } from "@prisma/client";
+import {
+  PrismaClientKnownRequestError,
+} from "@prisma/client/runtime/library";
 import type { OrderWithTickets, OrderRepository } from "@/core/domain/repositories/order-repository";
 
 export interface CreateOrderUseCaseInput {
@@ -51,7 +54,7 @@ export class CreateOrderUseCase {
         seatIds,
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      if (error instanceof PrismaClientKnownRequestError && error.code === "P2002") {
         throw new ApplicationError("One or more seats are already occupied for this session.", 409);
       }
 

@@ -24,7 +24,12 @@ export class SQLMovieRepository implements MovieRepository {
       orderBy: { id: "asc" },
     });
 
-    return movies.map((movie) => this.toDomain(movie));
+    return movies.map((movie: {
+      id: number;
+      name: string;
+      duration: number | null;
+      releaseDate: Date | null;
+    }) => this.toDomain(movie));
   }
 
   async findById(id: number): Promise<Movie | null> {

@@ -6,6 +6,8 @@ import { ListUsersUseCase } from "@/core/application/use-cases/crud/user/list-us
 import { repositoryFactory } from "@/core/infrastructure/repositories/factory/repository-factory";
 import { SeatPurchasePanel } from "@/app/sessoes/[id]/seat-purchase-panel";
 
+export const dynamic = "force-dynamic";
+
 function parseId(value: string): number | null {
   const id = Number(value);
   if (!Number.isInteger(id) || id <= 0) {

@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ListMoviesUseCase } from "@/core/application/use-cases/crud/movie/list-movies-use-case";
 import { repositoryFactory } from "@/core/infrastructure/repositories/factory/repository-factory";
 
+export const dynamic = "force-dynamic";
+
 function placeholderColor(movieId: number): string {
   const palette = ["#f97316", "#14b8a6", "#0ea5e9", "#e11d48", "#7c3aed", "#16a34a"];
   return palette[movieId % palette.length];

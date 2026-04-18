@@ -6,6 +6,7 @@ import { ListUserPurchaseSummaryReportUseCase } from "@/core/application/use-cas
 import { repositoryFactory } from "@/core/infrastructure/repositories/factory/repository-factory";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 function formatDateTime(value: Date | null): string {
   if (!value) {
