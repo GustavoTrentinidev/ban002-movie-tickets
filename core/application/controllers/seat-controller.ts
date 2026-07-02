@@ -1,5 +1,6 @@
 import { AbstractController } from "@/core/application/controllers/abstract-controller";
 import { ApplicationError } from "@/core/application/errors/application-error";
+import { requireRole } from "@/core/application/auth/get-session-user";
 import { CreateSeatUseCase } from "@/core/application/use-cases/crud/seat/create-seat-use-case";
 import { DeleteSeatUseCase } from "@/core/application/use-cases/crud/seat/delete-seat-use-case";
 import { DeleteSeatsByRoomUseCase } from "@/core/application/use-cases/crud/seat/delete-seats-by-room-use-case";
@@ -21,6 +22,8 @@ export class SeatController extends AbstractController {
 
   async create(request: Request): Promise<Response> {
     return this.execute(async () => {
+      await requireRole("ADMIN");
+
       const body = await request.json();
       const seat = await this.createSeatUseCase.execute({
         roomId: body?.roomId,
@@ -52,6 +55,8 @@ export class SeatController extends AbstractController {
 
   async update(request: Request, idParam: string): Promise<Response> {
     return this.execute(async () => {
+      await requireRole("ADMIN");
+
       const id = this.parseId(idParam);
       const body = await request.json();
       const seat = await this.updateSeatUseCase.execute({
@@ -66,6 +71,8 @@ export class SeatController extends AbstractController {
 
   async delete(idParam: string): Promise<Response> {
     return this.execute(async () => {
+      await requireRole("ADMIN");
+
       const id = this.parseId(idParam);
       await this.deleteSeatUseCase.execute(id);
       return new Response(null, { status: 204 });
@@ -74,6 +81,8 @@ export class SeatController extends AbstractController {
 
   async deleteByRoom(request: Request): Promise<Response> {
     return this.execute(async () => {
+      await requireRole("ADMIN");
+
       const roomId = this.parseQueryInt(request, "roomId");
       if (roomId === null) {
         throw new ApplicationError("Query param 'roomId' is required.", 400);

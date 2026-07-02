@@ -5,6 +5,7 @@ import { GetMovieByIdUseCase } from "@/core/application/use-cases/crud/movie/get
 import { ListMoviesUseCase } from "@/core/application/use-cases/crud/movie/list-movies-use-case";
 import { UpdateMovieUseCase } from "@/core/application/use-cases/crud/movie/update-movie-use-case";
 import { ApplicationError } from "@/core/application/errors/application-error";
+import { requireRole } from "@/core/application/auth/get-session-user";
 
 export class MovieController extends AbstractController {
   constructor(
@@ -19,6 +20,8 @@ export class MovieController extends AbstractController {
 
   async create(request: Request): Promise<Response> {
     return this.execute(async () => {
+      await requireRole("ADMIN");
+
       const body = await request.json();
       const movie = await this.createMovieUseCase.execute({
         name: body?.name,
@@ -47,6 +50,8 @@ export class MovieController extends AbstractController {
 
   async update(request: Request, idParam: string): Promise<Response> {
     return this.execute(async () => {
+      await requireRole("ADMIN");
+
       const id = this.parseId(idParam);
       const body = await request.json();
       const movie = await this.updateMovieUseCase.execute({
@@ -62,6 +67,8 @@ export class MovieController extends AbstractController {
 
   async delete(idParam: string): Promise<Response> {
     return this.execute(async () => {
+      await requireRole("ADMIN");
+
       const id = this.parseId(idParam);
       await this.deleteMovieUseCase.execute(id);
       return new Response(null, { status: 204 });

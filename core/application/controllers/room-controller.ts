@@ -4,6 +4,7 @@ import { DeleteRoomUseCase } from "@/core/application/use-cases/crud/room/delete
 import { ListRoomsUseCase } from "@/core/application/use-cases/crud/room/list-rooms-use-case";
 import { UpdateRoomUseCase } from "@/core/application/use-cases/crud/room/update-room-use-case";
 import { ApplicationError } from "@/core/application/errors/application-error";
+import { requireRole } from "@/core/application/auth/get-session-user";
 
 export class RoomController extends AbstractController {
   constructor(
@@ -17,6 +18,8 @@ export class RoomController extends AbstractController {
 
   async create(request: Request): Promise<Response> {
     return this.execute(async () => {
+      await requireRole("ADMIN");
+
       const body = await request.json();
       const output = await this.createRoomUseCase.execute({
         number: body?.number,
@@ -36,6 +39,8 @@ export class RoomController extends AbstractController {
 
   async update(request: Request, idParam: string): Promise<Response> {
     return this.execute(async () => {
+      await requireRole("ADMIN");
+
       const id = this.parseId(idParam);
       const body = await request.json();
       const room = await this.updateRoomUseCase.execute({
@@ -49,6 +54,8 @@ export class RoomController extends AbstractController {
 
   async delete(idParam: string): Promise<Response> {
     return this.execute(async () => {
+      await requireRole("ADMIN");
+
       const id = this.parseId(idParam);
       await this.deleteRoomUseCase.execute(id);
       return new Response(null, { status: 204 });

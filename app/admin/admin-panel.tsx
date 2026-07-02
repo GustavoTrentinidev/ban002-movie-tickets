@@ -12,6 +12,7 @@ type Movie = {
 type User = {
   id: number;
   username: string;
+  role: "ADMIN" | "DEFAULT";
 };
 
 type Room = {
@@ -132,6 +133,8 @@ export function AdminPanel() {
 
   const [userForm, setUserForm] = useState({
     username: "",
+    password: "",
+    role: "DEFAULT" as "ADMIN" | "DEFAULT",
   });
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
   const [userSubmitting, setUserSubmitting] = useState(false);
@@ -247,7 +250,7 @@ export function AdminPanel() {
   }
 
   function resetUserForm(): void {
-    setUserForm({ username: "" });
+    setUserForm({ username: "", password: "", role: "DEFAULT" });
     setEditingUserId(null);
   }
 
@@ -272,9 +275,19 @@ export function AdminPanel() {
     setUserSubmitting(true);
 
     try {
-      const payload = {
-        username: userForm.username,
-      };
+      const trimmedPassword = userForm.password.trim();
+      const payload =
+        editingUserId === null
+          ? {
+              username: userForm.username,
+              password: trimmedPassword,
+              role: userForm.role,
+            }
+          : {
+              username: userForm.username,
+              role: userForm.role,
+              ...(trimmedPassword === "" ? {} : { password: trimmedPassword }),
+            };
 
       const response = await fetch(editingUserId === null ? "/api/users" : `/api/users/${editingUserId}`, {
         method: editingUserId === null ? "POST" : "PUT",
@@ -305,6 +318,8 @@ export function AdminPanel() {
     setEditingUserId(user.id);
     setUserForm({
       username: user.username,
+      password: "",
+      role: user.role,
     });
     clearFeedback("users");
   }
@@ -665,8 +680,8 @@ export function AdminPanel() {
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold text-slate-900">Usuarios</h2>
 
-        <form className="mt-4 grid gap-4 md:grid-cols-3" onSubmit={(event) => void handleUserSubmit(event)}>
-          <label className="flex flex-col gap-1 text-sm text-slate-700 md:col-span-2">
+        <form className="mt-4 grid gap-4 md:grid-cols-4" onSubmit={(event) => void handleUserSubmit(event)}>
+          <label className="flex flex-col gap-1 text-sm text-slate-700">
             Nome de usuario
             <input
               value={userForm.username}
@@ -675,6 +690,33 @@ export function AdminPanel() {
               placeholder="Ex: maria"
               required
             />
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm text-slate-700">
+            Senha
+            <input
+              type="password"
+              value={userForm.password}
+              onChange={(event) => setUserForm((state) => ({ ...state, password: event.target.value }))}
+              className="rounded-md border border-slate-300 bg-white px-3 py-2"
+              placeholder={editingUserId === null ? "Minimo 8 caracteres" : "Deixe em branco para manter"}
+              autoComplete="new-password"
+              required={editingUserId === null}
+            />
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm text-slate-700">
+            Perfil
+            <select
+              value={userForm.role}
+              onChange={(event) =>
+                setUserForm((state) => ({ ...state, role: event.target.value as "ADMIN" | "DEFAULT" }))
+              }
+              className="rounded-md border border-slate-300 bg-white px-3 py-2"
+            >
+              <option value="DEFAULT">Padrao</option>
+              <option value="ADMIN">Administrador</option>
+            </select>
           </label>
 
           <div className="flex items-end gap-2">
@@ -706,6 +748,7 @@ export function AdminPanel() {
               <tr>
                 <th className="px-2 py-2 font-medium">ID</th>
                 <th className="px-2 py-2 font-medium">Usuario</th>
+                <th className="px-2 py-2 font-medium">Perfil</th>
                 <th className="px-2 py-2 font-medium">Acoes</th>
               </tr>
             </thead>
@@ -714,6 +757,7 @@ export function AdminPanel() {
                 <tr key={user.id} className="border-b border-slate-100">
                   <td className="px-2 py-2 text-slate-700">{user.id}</td>
                   <td className="px-2 py-2 text-slate-800">{user.username}</td>
+                  <td className="px-2 py-2 text-slate-700">{user.role === "ADMIN" ? "Administrador" : "Padrao"}</td>
                   <td className="px-2 py-2">
                     <div className="flex gap-2">
                       <button
@@ -736,7 +780,7 @@ export function AdminPanel() {
               ))}
               {users.length === 0 ? (
                 <tr>
-                  <td className="px-2 py-3 text-slate-600" colSpan={3}>
+                  <td className="px-2 py-3 text-slate-600" colSpan={4}>
                     Nenhum usuario cadastrado.
                   </td>
                 </tr>

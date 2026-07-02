@@ -9,21 +9,14 @@ type SeatViewModel = {
   isBlocked: boolean;
 };
 
-type UserViewModel = {
-  id: number;
-  username: string;
-};
-
 type SeatPurchasePanelProps = {
   sessionId: number;
   seats: SeatViewModel[];
-  users: UserViewModel[];
 };
 
-export function SeatPurchasePanel({ sessionId, seats, users }: SeatPurchasePanelProps) {
+export function SeatPurchasePanel({ sessionId, seats }: SeatPurchasePanelProps) {
   const router = useRouter();
   const [selectedSeatIds, setSelectedSeatIds] = useState<number[]>([]);
-  const [selectedUserId, setSelectedUserId] = useState<string>(users[0]?.id?.toString() ?? "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string>("");
   const [error, setError] = useState<string>("");
@@ -51,12 +44,6 @@ export function SeatPurchasePanel({ sessionId, seats, users }: SeatPurchasePanel
     setError("");
     setMessage("");
 
-    const userId = Number(selectedUserId);
-    if (!Number.isInteger(userId) || userId <= 0) {
-      setError("Selecione um usuario comprador.");
-      return;
-    }
-
     if (selectedSeatIds.length === 0) {
       setError("Selecione pelo menos um assento disponivel.");
       return;
@@ -70,7 +57,6 @@ export function SeatPurchasePanel({ sessionId, seats, users }: SeatPurchasePanel
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          userId,
           status: 1,
           sessionId,
           seatIds: selectedSeatIds,
@@ -137,23 +123,6 @@ export function SeatPurchasePanel({ sessionId, seats, users }: SeatPurchasePanel
       </div>
 
       <div className="mt-8 grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-3 md:items-end">
-        <label className="flex flex-col gap-1 text-sm text-slate-700">
-          Usuario comprador
-          <select
-            value={selectedUserId}
-            onChange={(event) => setSelectedUserId(event.target.value)}
-            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
-            disabled={isSubmitting || users.length === 0}
-          >
-            {users.length === 0 ? <option value="">Nenhum usuario cadastrado</option> : null}
-            {users.map((user) => (
-              <option key={user.id} value={user.id}>
-                {user.id} - {user.username}
-              </option>
-            ))}
-          </select>
-        </label>
-
         <div className="text-sm text-slate-700 md:col-span-2">
           <p className="font-medium">Assentos selecionados</p>
           <p className="mt-1 text-slate-600">
@@ -166,7 +135,7 @@ export function SeatPurchasePanel({ sessionId, seats, users }: SeatPurchasePanel
         <button
           type="button"
           onClick={handlePurchase}
-          disabled={isSubmitting || users.length === 0 || selectedSeatIds.length === 0}
+          disabled={isSubmitting || selectedSeatIds.length === 0}
           className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-400"
         >
           {isSubmitting ? "Processando compra..." : "Comprar assentos"}

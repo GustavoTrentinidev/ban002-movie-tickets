@@ -7,11 +7,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  ADMIN
+  DEFAULT
+}
+
 model User {
-  id        Int      @id @default(autoincrement())
-  username  String
-  createdAt DateTime @default(now()) @map("created_at")
-  orders    Order[]
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  passwordHash String   @map("password_hash")
+  role         Role     @default(DEFAULT)
+  createdAt    DateTime @default(now()) @map("created_at")
+  orders       Order[]
 
   @@map("users")
 }

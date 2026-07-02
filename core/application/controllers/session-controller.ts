@@ -1,5 +1,6 @@
 import { AbstractController } from "@/core/application/controllers/abstract-controller";
 import { ApplicationError } from "@/core/application/errors/application-error";
+import { requireRole } from "@/core/application/auth/get-session-user";
 import { CreateSessionUseCase } from "@/core/application/use-cases/crud/session/create-session-use-case";
 import { DeleteSessionUseCase } from "@/core/application/use-cases/crud/session/delete-session-use-case";
 import { ListSessionsUseCase } from "@/core/application/use-cases/crud/session/list-sessions-use-case";
@@ -17,6 +18,8 @@ export class SessionController extends AbstractController {
 
   async create(request: Request): Promise<Response> {
     return this.execute(async () => {
+      await requireRole("ADMIN");
+
       const body = await request.json();
       const session = await this.createSessionUseCase.execute({
         movieId: body?.movieId,
@@ -41,6 +44,8 @@ export class SessionController extends AbstractController {
 
   async update(request: Request, idParam: string): Promise<Response> {
     return this.execute(async () => {
+      await requireRole("ADMIN");
+
       const id = this.parseId(idParam);
       const body = await request.json();
       const session = await this.updateSessionUseCase.execute({
@@ -56,6 +61,8 @@ export class SessionController extends AbstractController {
 
   async delete(idParam: string): Promise<Response> {
     return this.execute(async () => {
+      await requireRole("ADMIN");
+
       const id = this.parseId(idParam);
       await this.deleteSessionUseCase.execute(id);
       return new Response(null, { status: 204 });

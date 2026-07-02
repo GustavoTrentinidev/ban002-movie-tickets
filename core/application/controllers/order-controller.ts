@@ -1,5 +1,6 @@
 import { AbstractController } from "@/core/application/controllers/abstract-controller";
 import { ApplicationError } from "@/core/application/errors/application-error";
+import { requireSessionUser } from "@/core/application/auth/get-session-user";
 import { CreateOrderUseCase } from "@/core/application/use-cases/crud/order/create-order-use-case";
 import { DeleteOrderUseCase } from "@/core/application/use-cases/crud/order/delete-order-use-case";
 import { ListOrdersUseCase } from "@/core/application/use-cases/crud/order/list-orders-use-case";
@@ -17,9 +18,11 @@ export class OrderController extends AbstractController {
 
   async create(request: Request): Promise<Response> {
     return this.execute(async () => {
+      const session = await requireSessionUser();
+
       const body = await request.json();
       const order = await this.createOrderUseCase.execute({
-        userId: body?.userId,
+        userId: session.userId,
         status: body?.status,
         sessionId: body?.sessionId,
         seatIds: body?.seatIds,
