@@ -4,16 +4,22 @@ import type {
   MovieRepository,
   UpdateMovieRepositoryInput,
 } from "@/core/domain/repositories/movie-repository";
+import { getNextSequence } from "@/core/infrastructure/repositories/nosql/id-generator";
 import { prisma } from "@/core/infrastructure/database/prisma/client";
 
-export class SQLMovieRepository implements MovieRepository {
+export class NoSQLMovieRepository implements MovieRepository {
   async create(input: CreateMovieRepositoryInput): Promise<Movie> {
-    const movie = await prisma.movie.create({
-      data: {
-        name: input.name,
-        duration: input.duration,
-        releaseDate: input.releaseDate,
-      },
+    const movie = await prisma.$transaction(async (tx) => {
+      const id = await getNextSequence(tx, "movie");
+
+      return tx.movie.create({
+        data: {
+          id,
+          name: input.name,
+          duration: input.duration,
+          releaseDate: input.releaseDate,
+        },
+      });
     });
 
     return this.toDomain(movie);

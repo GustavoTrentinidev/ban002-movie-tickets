@@ -5,9 +5,10 @@ import type {
   SessionSeatMap,
   UpdateSeatInput,
 } from "@/core/domain/repositories/seat-repository";
+import { getNextSequence } from "@/core/infrastructure/repositories/nosql/id-generator";
 import { prisma } from "@/core/infrastructure/database/prisma/client";
 
-export class SQLSeatRepository implements SeatRepository {
+export class NoSQLSeatRepository implements SeatRepository {
   async roomExists(roomId: number): Promise<boolean> {
     const room = await prisma.room.findUnique({
       where: { id: roomId },
@@ -113,11 +114,16 @@ export class SQLSeatRepository implements SeatRepository {
   }
 
   async create(input: CreateSeatInput): Promise<Seat> {
-    const seat = await prisma.seat.create({
-      data: {
-        roomId: input.roomId,
-        number: input.number,
-      },
+    const seat = await prisma.$transaction(async (tx) => {
+      const id = await getNextSequence(tx, "seat");
+
+      return tx.seat.create({
+        data: {
+          id,
+          roomId: input.roomId,
+          number: input.number,
+        },
+      });
     });
 
     return this.toDomain(seat);

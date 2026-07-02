@@ -6,9 +6,10 @@ import type {
   RoomRepository,
   UpdateRoomInput,
 } from "@/core/domain/repositories/room-repository";
+import { getNextSequence } from "@/core/infrastructure/repositories/nosql/id-generator";
 import { prisma } from "@/core/infrastructure/database/prisma/client";
 
-export class SQLRoomRepository implements RoomRepository {
+export class NoSQLRoomRepository implements RoomRepository {
   async findByNumber(number: number): Promise<Room | null> {
     const room = await prisma.room.findUnique({
       where: { number },
@@ -43,27 +44,31 @@ export class SQLRoomRepository implements RoomRepository {
 
   async createWithSeats(input: CreateRoomWithSeatsInput): Promise<CreateRoomWithSeatsOutput> {
     return prisma.$transaction(async (tx) => {
+      const roomId = await getNextSequence(tx, "room");
+
       const room = await tx.room.create({
         data: {
+          id: roomId,
           number: input.number,
         },
       });
 
-      await tx.seat.createMany({
-        data: Array.from({ length: input.seatsCount }, (_, index) => ({
-          roomId: room.id,
-          number: index + 1,
-        })),
-      });
-
-      const seats = await tx.seat.findMany({
-        where: { roomId: room.id },
-        orderBy: { number: "asc" },
-      });
+      const seats: Seat[] = [];
+      for (let index = 0; index < input.seatsCount; index += 1) {
+        const seatId = await getNextSequence(tx, "seat");
+        const seat = await tx.seat.create({
+          data: {
+            id: seatId,
+            roomId: room.id,
+            number: index + 1,
+          },
+        });
+        seats.push(this.toSeat(seat));
+      }
 
       return {
         room: this.toRoom(room),
-        seats: seats.map((seat) => this.toSeat(seat)),
+        seats,
       };
     });
   }

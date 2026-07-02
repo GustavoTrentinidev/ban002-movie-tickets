@@ -6,7 +6,10 @@ if [ -z "$DATABASE_URL" ]; then
   exit 1
 fi
 
-echo "Running database migrations (if pending)..."
-npx prisma migrate deploy
+echo "Syncing MongoDB schema/indexes (if pending)..."
+npx prisma db push --skip-generate
+
+echo "Seeding default data (if the database is empty)..."
+npx prisma db seed
 
 exec "$@"
