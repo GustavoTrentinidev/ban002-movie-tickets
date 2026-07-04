@@ -2,6 +2,8 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 Collage project.
 
+Copy `.env.example` to `.env` before running the app (fill in `DATABASE_URL` and `SESSION_SECRET`).
+
 Run the start.sh script:
 ```
 ./start.sh

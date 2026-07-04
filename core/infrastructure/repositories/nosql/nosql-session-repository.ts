@@ -5,9 +5,10 @@ import type {
   SessionWithMovieDuration,
   UpdateSessionInput,
 } from "@/core/domain/repositories/session-repository";
+import { getNextSequence } from "@/core/infrastructure/repositories/nosql/id-generator";
 import { prisma } from "@/core/infrastructure/database/prisma/client";
 
-export class SQLSessionRepository implements SessionRepository {
+export class NoSQLSessionRepository implements SessionRepository {
   async roomExists(roomId: number): Promise<boolean> {
     const room = await prisma.room.findUnique({
       where: { id: roomId },
@@ -84,12 +85,17 @@ export class SQLSessionRepository implements SessionRepository {
   }
 
   async create(input: CreateSessionInput): Promise<Session> {
-    const session = await prisma.session.create({
-      data: {
-        movieId: input.movieId,
-        roomId: input.roomId,
-        sessionTime: input.sessionTime,
-      },
+    const session = await prisma.$transaction(async (tx) => {
+      const id = await getNextSequence(tx, "session");
+
+      return tx.session.create({
+        data: {
+          id,
+          movieId: input.movieId,
+          roomId: input.roomId,
+          sessionTime: input.sessionTime,
+        },
+      });
     });
 
     return this.toSession(session);

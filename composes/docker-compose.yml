@@ -1,24 +1,41 @@
-x-app-db-url: &app_db_url postgresql://postgres:postgres@postgres:5432/movie_tickets?schema=public
+x-app-db-url: &app_db_url mongodb://mongo:27017/movie_tickets?replicaSet=rs0
 
 services:
 
-  postgres:
-    image: postgres:16-alpine
-    container_name: movie_tickets_postgres
+  mongo:
+    image: mongo:7
+    container_name: movie_tickets_mongo
     restart: unless-stopped
-    environment:
-      POSTGRES_DB: movie_tickets
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+    command: ["--replSet", "rs0", "--bind_ip_all"]
     ports:
-      - "5432:5432"
+      - "27017:27017"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mongo_data:/data/db
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d movie_tickets"]
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  mongo-rs-init:
+    image: mongo:7
+    container_name: movie_tickets_mongo_rs_init
+    restart: "no"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    entrypoint:
+      - mongosh
+      - --host
+      - mongo:27017
+      - --quiet
+      - --eval
+      - >
+        try {
+          rs.status();
+        } catch (e) {
+          rs.initiate({ _id: "rs0", members: [{ _id: 0, host: "mongo:27017" }] });
+        }
 
   app:
     build:
@@ -29,8 +46,10 @@ services:
     container_name: movie_tickets_app
     restart: unless-stopped
     depends_on:
-      postgres:
+      mongo:
         condition: service_healthy
+      mongo-rs-init:
+        condition: service_completed_successfully
     env_file:
       - ../.env
     environment:
@@ -40,4 +59,4 @@ services:
       - "3000:3000"
 
 volumes:
-  postgres_data:
+  mongo_data:

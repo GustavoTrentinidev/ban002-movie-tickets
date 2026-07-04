@@ -8,9 +8,10 @@ import type {
   SessionInfo,
   UpdateOrderInput,
 } from "@/core/domain/repositories/order-repository";
+import { getNextSequence } from "@/core/infrastructure/repositories/nosql/id-generator";
 import { prisma } from "@/core/infrastructure/database/prisma/client";
 
-export class SQLOrderRepository implements OrderRepository {
+export class NoSQLOrderRepository implements OrderRepository {
   async userExists(userId: number): Promise<boolean> {
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -80,27 +81,29 @@ export class SQLOrderRepository implements OrderRepository {
 
   async createWithTickets(input: CreateOrderWithTicketsInput): Promise<OrderWithTickets> {
     return prisma.$transaction(async (tx) => {
+      const orderId = await getNextSequence(tx, "order");
+
       const order = await tx.order.create({
         data: {
+          id: orderId,
           userId: input.userId,
           status: input.status,
         },
       });
 
-      await tx.ticket.createMany({
-        data: input.seatIds.map((seatId) => ({
-          orderId: order.id,
-          sessionId: input.sessionId,
-          seatId,
-        })),
-      });
-
-      const tickets = await tx.ticket.findMany({
-        where: {
-          orderId: order.id,
-        },
-        orderBy: { id: "asc" },
-      });
+      const tickets = [];
+      for (const seatId of input.seatIds) {
+        const ticketId = await getNextSequence(tx, "ticket");
+        const ticket = await tx.ticket.create({
+          data: {
+            id: ticketId,
+            orderId: order.id,
+            sessionId: input.sessionId,
+            seatId,
+          },
+        });
+        tickets.push(ticket);
+      }
 
       return {
         order: this.toOrder(order),

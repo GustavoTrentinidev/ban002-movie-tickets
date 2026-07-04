@@ -4,17 +4,23 @@ import type {
   UpdateUserInput,
   UserRepository,
 } from "@/core/domain/repositories/user-repository";
+import { getNextSequence } from "@/core/infrastructure/repositories/nosql/id-generator";
 import { prisma } from "@/core/infrastructure/database/prisma/client";
 import type { User as PrismaUser } from "@prisma/client";
 
-export class SQLUserRepository implements UserRepository {
+export class NoSQLUserRepository implements UserRepository {
   async create(input: CreateUserInput): Promise<User> {
-    const user = await prisma.user.create({
-      data: {
-        username: input.username,
-        passwordHash: input.passwordHash,
-        role: input.role,
-      },
+    const user = await prisma.$transaction(async (tx) => {
+      const id = await getNextSequence(tx, "user");
+
+      return tx.user.create({
+        data: {
+          id,
+          username: input.username,
+          passwordHash: input.passwordHash,
+          role: input.role,
+        },
+      });
     });
 
     return this.toUser(user);

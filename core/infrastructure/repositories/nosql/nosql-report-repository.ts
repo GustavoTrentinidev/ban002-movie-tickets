@@ -6,7 +6,7 @@ import type {
 } from "@/core/domain/repositories/report-repository";
 import { prisma } from "@/core/infrastructure/database/prisma/client";
 
-export class SQLReportRepository implements ReportRepository {
+export class NoSQLReportRepository implements ReportRepository {
   async listMoviesBoughtByUser(userId: number): Promise<UserMovieTicketsReportRow[]> {
     const tickets = await prisma.ticket.findMany({
       where: {

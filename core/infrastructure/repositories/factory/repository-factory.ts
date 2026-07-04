@@ -5,13 +5,13 @@ import type { ReportRepository } from "@/core/domain/repositories/report-reposit
 import type { SeatRepository } from "@/core/domain/repositories/seat-repository";
 import type { SessionRepository } from "@/core/domain/repositories/session-repository";
 import type { UserRepository } from "@/core/domain/repositories/user-repository";
-import { SQLMovieRepository } from "@/core/infrastructure/repositories/sql/sql-movie-repository";
-import { SQLOrderRepository } from "@/core/infrastructure/repositories/sql/sql-order-repository";
-import { SQLReportRepository } from "@/core/infrastructure/repositories/sql/sql-report-repository";
-import { SQLRoomRepository } from "@/core/infrastructure/repositories/sql/sql-room-repository";
-import { SQLSeatRepository } from "@/core/infrastructure/repositories/sql/sql-seat-repository";
-import { SQLSessionRepository } from "@/core/infrastructure/repositories/sql/sql-session-repository";
-import { SQLUserRepository } from "@/core/infrastructure/repositories/sql/sql-user-repository";
+import { NoSQLMovieRepository } from "@/core/infrastructure/repositories/nosql/nosql-movie-repository";
+import { NoSQLOrderRepository } from "@/core/infrastructure/repositories/nosql/nosql-order-repository";
+import { NoSQLReportRepository } from "@/core/infrastructure/repositories/nosql/nosql-report-repository";
+import { NoSQLRoomRepository } from "@/core/infrastructure/repositories/nosql/nosql-room-repository";
+import { NoSQLSeatRepository } from "@/core/infrastructure/repositories/nosql/nosql-seat-repository";
+import { NoSQLSessionRepository } from "@/core/infrastructure/repositories/nosql/nosql-session-repository";
+import { NoSQLUserRepository } from "@/core/infrastructure/repositories/nosql/nosql-user-repository";
 
 export interface RepositoryFactory {
   movie(): MovieRepository;
@@ -23,34 +23,34 @@ export interface RepositoryFactory {
   report(): ReportRepository;
 }
 
-class SQLRepositoryFactory implements RepositoryFactory {
+class NoSQLRepositoryFactory implements RepositoryFactory {
   movie(): MovieRepository {
-    return new SQLMovieRepository();
+    return new NoSQLMovieRepository();
   }
 
   session(): SessionRepository {
-    return new SQLSessionRepository();
+    return new NoSQLSessionRepository();
   }
 
   seat(): SeatRepository {
-    return new SQLSeatRepository();
+    return new NoSQLSeatRepository();
   }
 
   order(): OrderRepository {
-    return new SQLOrderRepository();
+    return new NoSQLOrderRepository();
   }
 
   user(): UserRepository {
-    return new SQLUserRepository();
+    return new NoSQLUserRepository();
   }
 
   room(): RoomRepository {
-    return new SQLRoomRepository();
+    return new NoSQLRoomRepository();
   }
 
   report(): ReportRepository {
-    return new SQLReportRepository();
+    return new NoSQLReportRepository();
   }
 }
 
-export const repositoryFactory: RepositoryFactory = new SQLRepositoryFactory();
+export const repositoryFactory: RepositoryFactory = new NoSQLRepositoryFactory();
