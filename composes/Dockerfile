@@ -4,7 +4,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY prisma ./prisma
 ARG DATABASE_URL
-ENV DATABASE_URL=${DATABASE_URL}
+ENV DATABASE_URL=postgresql://postgres:postgres@db:5432/movietickets
 RUN npm ci
 RUN npx prisma generate
 

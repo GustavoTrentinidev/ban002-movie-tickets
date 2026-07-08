@@ -31,11 +31,10 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    env_file:
-      - ../.env
     environment:
       DATABASE_URL: *app_db_url
       NODE_ENV: production
+      SESSION_SECRET: local-dev-secret-TODO-trocar-em-producao
     ports:
       - "3000:3000"
 
